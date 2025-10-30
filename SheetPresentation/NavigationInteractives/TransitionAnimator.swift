@@ -56,27 +56,6 @@ extension TransitionAnimator: UIViewControllerAnimatedTransitioning {
     }
 }
 
-struct DimmedConfiguration {
-    var backgroundColor: UIColor
-    var blurEffectStyle: UIBlurEffect.Style
-}
-
-struct TransitionSupporter {
-
-    static func createDimmedView(blurEffect: Bool = false) -> UIView {
-        let view = UIView(frame: UIScreen.main.bounds)
-        let dimmed = DimmedConfiguration(backgroundColor: #colorLiteral(red: 0.06666666667, green: 0.06666666667, blue: 0.06666666667, alpha: 1), blurEffectStyle: .extraLight)
-        view.backgroundColor = dimmed.backgroundColor
-        view.alpha = 0
-        if blurEffect {
-            let blurEffect = UIBlurEffect(style: dimmed.blurEffectStyle)
-            let visualEffectView = UIVisualEffectView(effect: blurEffect)
-            view.addSubview(visualEffectView)
-        }
-        return view
-    }
-}
-
 /// Custom animation logic, Dealing with view arragement, view movement
 class SwipePopTransitionAnimator: TransitionAnimator {
 
@@ -92,7 +71,7 @@ class SwipePopTransitionAnimator: TransitionAnimator {
         toViewRect.origin.x = -(currentWindowBounds.width / 3) + 14
         toView.frame = toViewRect
 
-        let dimmedView = TransitionSupporter.createDimmedView(blurEffect: false)
+        let dimmedView = createDimmedView(blurEffect: false)
         dimmedView.alpha = 1
         toView.addSubview(dimmedView)
 
@@ -105,5 +84,23 @@ class SwipePopTransitionAnimator: TransitionAnimator {
             dimmedView.removeFromSuperview()
             transitionContext.completeTransition(!transitionContext.transitionWasCancelled)
         })
+    }
+
+    struct DimmedConfiguration {
+        var backgroundColor: UIColor
+        var blurEffectStyle: UIBlurEffect.Style
+    }
+
+    private func createDimmedView(blurEffect: Bool = false) -> UIView {
+        let view = UIView(frame: UIScreen.main.bounds)
+        let dimmed = DimmedConfiguration(backgroundColor: #colorLiteral(red: 0.06666666667, green: 0.06666666667, blue: 0.06666666667, alpha: 1), blurEffectStyle: .extraLight)
+        view.backgroundColor = dimmed.backgroundColor
+        view.alpha = 0
+        if blurEffect {
+            let blurEffect = UIBlurEffect(style: dimmed.blurEffectStyle)
+            let visualEffectView = UIVisualEffectView(effect: blurEffect)
+            view.addSubview(visualEffectView)
+        }
+        return view
     }
 }
