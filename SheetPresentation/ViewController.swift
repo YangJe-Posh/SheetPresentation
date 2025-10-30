@@ -144,13 +144,33 @@ class ViewController: UIViewController {
 }
 
 class CustomNavigationController: UINavigationController, UINavigationControllerDelegate {
-    
+
+    var transitionType: NavigationInteractiveTransition = .swipePop {
+        didSet {
+            guard oldValue != transitionType else { return }
+            interactive = InteractiveTransition<NavigationInteractiveTransition>(convertible: transitionType)
+            interactive.attachGesture(in: view)
+            interactive.panGesture?.delegate = self
+        }
+    }
+
+    lazy var interactive = InteractiveTransition<NavigationInteractiveTransition>(convertible: transitionType)
+
     override init(rootViewController: UIViewController) {
         super.init(rootViewController: rootViewController)
         
         self.delegate = self
     }
-    
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // stop default pop gesture
+        interactivePopGestureRecognizer?.isEnabled = false
+        // add custom interactive
+        interactive.attachGesture(in: view)
+        interactive.panGesture?.delegate = self
+    }
+
     required init?(coder aDecoder: NSCoder) {
         return nil
     }
@@ -160,6 +180,10 @@ class CustomNavigationController: UINavigationController, UINavigationController
         willShow viewController: UIViewController,
         animated: Bool
     ) {
+        // setting the interactive transition context
+        let fromViewController = navigationController.topViewController
+        interactive.setupContext(from: fromViewController, to: viewController)
+        
         guard let transitionCoordinator else {
             self.updatePreferredContentSize(for: viewController)
             return
@@ -171,6 +195,16 @@ class CustomNavigationController: UINavigationController, UINavigationController
             },
             completion: nil
         )
+    }
+
+    // UINavigationControllerDelegate main method
+    func navigationController(_ navigationController: UINavigationController, animationControllerFor operation: UINavigationController.Operation, from fromVC: UIViewController, to toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+        guard operation == .pop else { return nil } // only in pop action, using interactive animator
+        return interactive.animator
+    }
+    
+    func navigationController(_ navigationController: UINavigationController, interactionControllerFor animationController: UIViewControllerAnimatedTransitioning) -> UIViewControllerInteractiveTransitioning? {
+        return interactive.useGestureInteractive ? interactive.percentDrivenInteractiveTransition : nil
     }
     
     private func updatePreferredContentSize(for vc: UIViewController) {
@@ -261,4 +295,47 @@ class CustomViewController: UIViewController {
     private func backScreen() {
         self.navigationController?.popViewController(animated: true)
     }
+}
+
+extension CustomNavigationController: UIGestureRecognizerDelegate {
+
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard viewControllers.count > 1 else { return false }
+
+        if let panGesture = gestureRecognizer as? UIPanGestureRecognizer, self.view == gestureRecognizer.view {
+            return panGesture.direction == .right
+        }
+        return true
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard viewControllers.first != visibleViewController, interactive.animator?.transitionDirection == .backward else {
+            return false
+        }
+
+        if let otherView = otherGestureRecognizer.view as? UICollectionView {
+            let layout = otherView.collectionViewLayout as? UICollectionViewFlowLayout
+            if layout?.scrollDirection == .horizontal {
+                return otherView.contentOffset.x == 0
+            }
+        } else if let otherView = otherGestureRecognizer.view as? UIScrollView {
+            return otherView.contentOffset.x == 0
+        }
+
+        return false
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard let cell = otherGestureRecognizer.view as? NavigationControllerGestureShareable,
+              let panGesture = otherGestureRecognizer as? UIPanGestureRecognizer else {
+            return false
+        }
+
+        guard let direction = panGesture.direction else { return false }
+        return direction == .right && !cell.usingSwipeGestureDirections.contains(direction)
+    }
+}
+
+protocol NavigationControllerGestureShareable {
+    var usingSwipeGestureDirections: Set<GestureDirection> { get }
 }
