@@ -237,6 +237,17 @@ class CustomViewController: UIViewController {
         stackView.translatesAutoresizingMaskIntoConstraints = false
         stackView.centerXAnchor.constraint(equalTo: self.view.centerXAnchor).isActive = true
         stackView.centerYAnchor.constraint(equalTo: self.view.centerYAnchor).isActive = true
+
+        let backButton = UIButton(
+            configuration: .borderedProminent(),
+            primaryAction: UIAction(title: "← Back") { [weak self] _ in
+                self?.backScreen()
+            }
+        )
+        self.view.addSubview(backButton)
+        backButton.translatesAutoresizingMaskIntoConstraints = false
+        backButton.centerXAnchor.constraint(equalTo: self.view.centerXAnchor).isActive = true
+        backButton.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor, constant: -20).isActive = true
     }
     
     private func pushScreen() {
@@ -245,5 +256,9 @@ class CustomViewController: UIViewController {
         
         let viewController = CustomViewController(preferredContentHeight: preferredContentHeight)
         self.navigationController?.pushViewController(viewController, animated: true)
+    }
+
+    private func backScreen() {
+        self.navigationController?.popViewController(animated: true)
     }
 }
