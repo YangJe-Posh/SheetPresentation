@@ -145,16 +145,16 @@ class ViewController: UIViewController {
 
 class CustomNavigationController: UINavigationController, UINavigationControllerDelegate {
 
-    var transitionType: NavigationInteractiveTransition = .swipePop {
+    var transitionType: NavigationInteractiveTransitionType = .swipePop {
         didSet {
             guard oldValue != transitionType else { return }
-            interactive = InteractiveTransition<NavigationInteractiveTransition>(convertible: transitionType)
+            interactive = InteractiveTransition<NavigationInteractiveTransitionType>(interface: transitionType)
             interactive.attachGesture(in: view)
             interactive.panGesture?.delegate = self
         }
     }
 
-    lazy var interactive = InteractiveTransition<NavigationInteractiveTransition>(convertible: transitionType)
+    lazy var interactive = InteractiveTransition<NavigationInteractiveTransitionType>(interface: transitionType)
 
     override init(rootViewController: UIViewController) {
         super.init(rootViewController: rootViewController)

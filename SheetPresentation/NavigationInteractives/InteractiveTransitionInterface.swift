@@ -7,9 +7,9 @@
 
 import UIKit
 
-typealias InteractiveTransitionConvertible = InteractiveTransitionConvertibleValues & InteractiveTransitionConvertibleActions
+typealias InteractiveTransitionInterface = InteractiveTransitionValues & InteractiveTransitionActions
 
-protocol InteractiveTransitionConvertibleValues {
+protocol InteractiveTransitionValues {
 
     var useInteractiveTransition: Bool { get }
 
@@ -30,7 +30,7 @@ protocol InteractiveTransitionConvertibleValues {
     func completeCondition(from velocity: CGPoint) -> Bool
 }
 
-protocol InteractiveTransitionConvertibleActions {
+protocol InteractiveTransitionActions {
 
     func forward(using context: InteractiveTransitionContext)
 

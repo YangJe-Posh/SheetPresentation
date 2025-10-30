@@ -8,7 +8,7 @@
 import UIKit
 
 /// Managing pan gesture, calculating the progress, checking threshold value
-class InteractiveTransition<Convertible: InteractiveTransitionConvertible>: NSObject, UIGestureRecognizerDelegate {
+class InteractiveTransition<Interface: InteractiveTransitionInterface>: NSObject, UIGestureRecognizerDelegate {
 
     var canUseGestureInteractive = true {
         didSet {
@@ -25,7 +25,7 @@ class InteractiveTransition<Convertible: InteractiveTransitionConvertible>: NSOb
 
     private(set) var transitionContext: InteractiveTransitionContext?
 
-    private(set) var convertible: Convertible?
+    private(set) var interface: Interface?
 
     private(set) var animator: TransitionAnimator?
 
@@ -41,18 +41,18 @@ class InteractiveTransition<Convertible: InteractiveTransitionConvertible>: NSOb
 
     private var isStarted: Bool = false
 
-    convenience init(convertible: Convertible, onStart: (() -> Void)? = nil, onPanning: ((CGFloat) -> Void)? = nil, onFinished: ((Bool) -> Void)? = nil) {
-        self.init(convertible: convertible)
+    convenience init(interface: Interface, onStart: (() -> Void)? = nil, onPanning: ((CGFloat) -> Void)? = nil, onFinished: ((Bool) -> Void)? = nil) {
+        self.init(interface: interface)
         self.onStart = onStart
         self.onPanning = onPanning
         self.onFinished = onFinished
     }
 
-    required init(convertible: Convertible) {
+    required init(interface: Interface) {
         super.init()
-        self.convertible = convertible
-        self.animator = convertible.animator
-        self.percentDrivenInteractiveTransition = convertible.percentDrivenInteractiveTransition
+        self.interface = interface
+        self.animator = interface.animator
+        self.percentDrivenInteractiveTransition = interface.percentDrivenInteractiveTransition
     }
 
     func setupContext(from fromViewController: UIViewController?, to toViewController: UIViewController?) {
@@ -79,7 +79,7 @@ class InteractiveTransition<Convertible: InteractiveTransitionConvertible>: NSOb
         guard canUseGestureInteractive else { return }
         switch recognizer.state {
         case .began:
-            guard convertible?.useInteractiveTransition ?? false else { return }
+            guard interface?.useInteractiveTransition ?? false else { return }
             guard let panDirection = panGesture?.direction, allowedPanGestureDirections.contains(panDirection) else { return }
 
             useGestureInteractive = true
@@ -87,25 +87,25 @@ class InteractiveTransition<Convertible: InteractiveTransitionConvertible>: NSOb
             onStart?()
         case .changed:
             guard isDuringAnimation else { return }
-            let threshold: CGFloat = convertible?.threshold ?? 0.5
+            let threshold: CGFloat = interface?.threshold ?? 0.5
             let percent: CGFloat = recognizer.view
                 .flatMap(recognizer.translation(in:))
-                .flatMap(calcuratePercent(at:)) ?? 0
+                .flatMap(calculatePercent(at:)) ?? 0
             if percent > 0, isStarted == false {
                 isStarted = true
                 begin()
             }
             percentDrivenInteractiveTransition?.update(percent)
             let velocity = recognizer.velocity(in: recognizer.view)
-            shouldComplete = percent > threshold || (convertible?.completeCondition(from: velocity) ?? false)
+            shouldComplete = percent > threshold || (interface?.completeCondition(from: velocity) ?? false)
             onPanning?(percent)
         case .cancelled, .ended:
             onFinished?(useGestureInteractive && recognizer.state == .ended && shouldComplete)
             if recognizer.state == .cancelled || !shouldComplete {
-                percentDrivenInteractiveTransition?.completionSpeed = convertible?.cancelCompletionSpeed ?? 0.2
+                percentDrivenInteractiveTransition?.completionSpeed = interface?.cancelCompletionSpeed ?? 0.2
                 percentDrivenInteractiveTransition?.cancel()
             } else {
-                percentDrivenInteractiveTransition?.completionSpeed = convertible?.finishCompletionSpeed ?? 1
+                percentDrivenInteractiveTransition?.completionSpeed = interface?.finishCompletionSpeed ?? 1
                 percentDrivenInteractiveTransition?.finish()
             }
             useGestureInteractive = false
@@ -121,15 +121,15 @@ private extension InteractiveTransition {
     func begin() {
         guard let context = transitionContext else { return }
         switch animator?.transitionDirection {
-        case .forward?: convertible?.forward(using: context)
-        case .backward?: convertible?.backward(using: context)
+        case .forward?: interface?.forward(using: context)
+        case .backward?: interface?.backward(using: context)
         case .none: break
         }
     }
 
-    func calcuratePercent(at translation: CGPoint) -> CGFloat {
-        let translationValue: CGFloat = convertible.map { $0.swipeDirection == .vertical ? translation.y : translation.x } ?? 0
-        let dragAmount = convertible.flatMap { $0.dragAmount }.map { animator?.transitionDirection == .forward ? -$0 : $0 } ?? 0
+    func calculatePercent(at translation: CGPoint) -> CGFloat {
+        let translationValue: CGFloat = interface.map { $0.swipeDirection == .vertical ? translation.y : translation.x } ?? 0
+        let dragAmount = interface.flatMap { $0.dragAmount }.map { animator?.transitionDirection == .forward ? -$0 : $0 } ?? 0
         var percent = translationValue / dragAmount
         percent = fmax(percent, 0)
         percent = fmin(percent, 1)

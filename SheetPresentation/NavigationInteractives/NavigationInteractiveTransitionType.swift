@@ -8,7 +8,7 @@
 
 import UIKit
 
-enum NavigationInteractiveTransition: RawRepresentable {
+enum NavigationInteractiveTransitionType: RawRepresentable {
 
     init?(rawValue: String) {
         return nil
@@ -23,7 +23,7 @@ enum NavigationInteractiveTransition: RawRepresentable {
     }
 }
 
-extension NavigationInteractiveTransition: InteractiveTransitionConvertibleValues {
+extension NavigationInteractiveTransitionType: InteractiveTransitionValues {
 
     var useInteractiveTransition: Bool {
         switch self {
@@ -71,7 +71,7 @@ extension NavigationInteractiveTransition: InteractiveTransitionConvertibleValue
     }
 }
 
-extension NavigationInteractiveTransition: InteractiveTransitionConvertibleActions {
+extension NavigationInteractiveTransitionType: InteractiveTransitionActions {
 
     func forward(using context: InteractiveTransitionContext) {
         guard let toViewController = context.toViewController else {
