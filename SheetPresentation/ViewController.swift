@@ -204,6 +204,7 @@ class CustomViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.navigationItem.hidesBackButton = true
         self.view.backgroundColor = Self.colors.randomElement() ?? .black
         
         let pushScreenButton = UIButton(
