@@ -14,11 +14,12 @@ enum NavigationInteractiveTransitionType: RawRepresentable {
         return nil
     }
 
-    case swipePop
+    case swipePop, dragDownPop
 
     var rawValue: String {
         switch self {
         case .swipePop: return "swipePop"
+        case .dragDownPop: return "modal"
         }
     }
 }
@@ -28,19 +29,20 @@ extension NavigationInteractiveTransitionType: InteractiveTransitionValues {
     var useInteractiveTransition: Bool {
         switch self {
         case .swipePop: return true
+        case .dragDownPop: return true
         }
     }
 
     var dragAmount: CGFloat {
         switch self {
         case .swipePop: return UIScreen.main.bounds.width
-        default: return UIScreen.main.bounds.height
+        case .dragDownPop: return UIScreen.main.bounds.width
         }
     }
 
     var swipeDirection: SwipeDirection {
         switch self {
-        case .swipePop: return .horizontal
+        case .swipePop, .dragDownPop: return .horizontal
         }
     }
 
@@ -58,7 +60,8 @@ extension NavigationInteractiveTransitionType: InteractiveTransitionValues {
 
     var animator: TransitionAnimator? {
         switch self {
-        case .swipePop: return SwipePopTransitionAnimator(direction: .backward, duration: 0.8)
+        case .swipePop: return SwipePopTransitionAnimator(direction: .backward, duration: 0.2)
+        case .dragDownPop: return ModalLikeTransitionAnimator(direction: .backward, duration: 0.4)
         }
     }
 
